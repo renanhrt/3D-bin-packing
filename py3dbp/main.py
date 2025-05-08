@@ -345,6 +345,96 @@ class Bin:
         return
 
 
+    def center_items(self):
+        layers = {}
+
+        for item in self.items:
+            layer = float(item.position[2])
+            if layer not in layers:
+                layers[layer] = []
+            layers[layer].append(item)
+
+        for layer_items in layers.values():
+            if not layer_items:
+                continue
+            
+            
+            min_x = min(item.position[0] for item in layer_items)
+            max_x = max(item.position[0] + (item.width if item.rotation_type == 0 else item.height) for item in layer_items)
+            min_y = min(item.position[1] for item in layer_items)
+            max_y = max(item.position[1] + (item.height if item.rotation_type == 0 else item.width) for item in layer_items)
+
+            center_x = (min_x + max_x) / 2
+            center_y = (min_y + max_y) / 2
+
+            bin_center_x = self.width / 2
+            bin_center_y = self.height / 2
+
+            shift_x = bin_center_x - center_x
+            shift_y = bin_center_y - center_y
+
+            for item in layer_items:
+                item.position[0] += shift_x
+                item.position[1] += shift_y
+
+
+    def new_center_items(self):
+        layers = {}
+
+        # Organize items by their level (z-coordinate)
+        for item in self.items:
+            layer = float(item.position[2])
+            if layer not in layers:
+                layers[layer] = []
+            layers[layer].append(item)
+
+        # Iterate over each layer
+        for layer_items in layers.values():
+            if not layer_items:
+                continue
+            
+            rebuilt_items = []
+            
+            for item in layer_items:
+                
+                item_copy = copy.deepcopy(item)
+                
+                range_x_item = [item.position[1], item.position[0] + (item.width if item.rotation_type == 0 else item.height)]
+                range_y_item = [item.position[1], item.position[0] + (item.height if item.rotation_type == 0 else item.width)]
+                print(range_x_item, range_y_item)
+                
+                items_on_range_x = [other_item for other_item in layer_items if other_item.position[1] >= range_x_item[0] and other_item.position[1] < range_x_item[1]]
+                items_on_range_y = [other_item for other_item in layer_items if other_item.position[0] >= range_y_item[0] and other_item.position[0] < range_y_item[1]]
+                
+                print(len(items_on_range_y),len(items_on_range_y))
+
+                if items_on_range_x:
+                    
+                    min_x = min(item_x.position[0] for item_x in items_on_range_x)
+                    max_x = max(item_x.position[0] + (item_x.width if item_x.rotation_type == 0 else item_x.height) for item_x in items_on_range_x)
+                    print(min_x,max_x)
+
+                    center_x = (min_x + max_x) / 2
+                    bin_center_x = self.width / 2
+                    shift_x = bin_center_x - center_x
+                    item_copy.position[0] += shift_x
+                    
+                if items_on_range_y:
+                    
+                    min_y = min(item_y.position[1] for item_y in items_on_range_y)
+                    max_y = max(item_y.position[1] + (item_y.height if item_y.rotation_type == 0 else item_y.width) for item_y in items_on_range_y)
+                    print(min_y,max_y)
+
+                    center_y = (min_y + max_y) / 2
+                    bin_center_y = self.height / 2
+                    shift_y = bin_center_y - center_y
+                    item_copy.position[1] += shift_y
+                
+                rebuilt_items.append(item_copy)
+            
+            for real_item, rebuilt_item in zip(layer_items, rebuilt_items):
+                real_item.position = rebuilt_item.position
+
 class Packer:
 
     def __init__(self):
